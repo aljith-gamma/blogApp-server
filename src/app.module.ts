@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { BlogModule } from './modules/blog/blog.module';
+import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -16,7 +18,9 @@ import { MailerModule } from '@nestjs-modules/mailer';
           pass: ''
         }
       }
-    })
+    }),
+    BlogModule,
+    CloudinaryModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
