@@ -25,6 +25,11 @@ export class BlogController {
     return this.blogService.findAll();
   }
 
+  @Get('categories')
+  public async getAllCategories (){
+    return this.blogService.getAllCategories();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.blogService.findOne(+id);

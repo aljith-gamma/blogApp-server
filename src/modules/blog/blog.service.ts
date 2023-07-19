@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
-import { User } from '@prisma/client';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -29,6 +28,14 @@ export class BlogService {
       }
     })
     return createBlogDto;
+  }
+
+  async getAllCategories(){
+    const categories = await this.prisma.category.findMany();
+
+    return {
+      categories
+    }
   }
 
   findAll() {
