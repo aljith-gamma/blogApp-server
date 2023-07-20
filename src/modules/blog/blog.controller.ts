@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, UseGuards, Req, ParseIntPipe } from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
@@ -14,15 +14,17 @@ export class BlogController {
   @UseInterceptors(FileInterceptor('file'))
   public async createBlog(
     @UploadedFile() file: Express.Multer.File,
-    @Body() createBlogDto: CreateBlogDto,
+    @Body() createBlogDto: CreateBlogDto,  
     @Req() { user }
   ){
     return this.blogService.createBlog(createBlogDto, file, user);
   }
 
-  @Get()
-  findAll() {
-    return this.blogService.findAll();
+  @Get('all')
+  findAll(
+    @Req() { user }
+  ) {
+    return this.blogService.findAll(user);
   }
 
   @Get('categories')
@@ -30,9 +32,9 @@ export class BlogController {
     return this.blogService.getAllCategories();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.blogService.findOne(+id);
+  @Get('getblog/:id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.blogService.findOne(id);
   }
 
   @Patch(':id')
