@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
@@ -13,7 +13,7 @@ export class BlogService {
   ){};
 
   async createBlog(createBlogDto: CreateBlogDto, file, user) {
-    const { title, description, tags} = createBlogDto;
+    const { title, description, tags, categoryId} = createBlogDto;
 
     const res = await this.cloudinaryService.uploadImage(file);
     const { secure_url } = res;
@@ -22,12 +22,16 @@ export class BlogService {
       data: {
         title,
         description,
-        tags: tags,
+        tags: JSON.parse(tags),
         imageUrl: secure_url,
-        userId: user.id
+        userId: user.id,
+        categoryId: +categoryId
       }
     })
-    return createBlogDto;
+    return {
+      status: true,
+      message: 'Blog posted successfully'
+    }
   }
 
   async getAllCategories(){
@@ -38,12 +42,83 @@ export class BlogService {
     }
   }
 
-  findAll() {
-    return `This action returns all blog`;
+  async findAll(user) {
+    
+    const blogs = await this.prisma.blog.findMany({
+      where: {
+        isDeleted: false,
+        status: 'PUBLISHED'
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        imageUrl: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            userName: true,
+            profile: {
+              select: {
+                avatarUrl: true
+              }
+            }
+          }
+        },
+        category: {
+          select: {
+            category: true
+          }
+        }
+      }
+    }) 
+
+    return {
+      status: true,
+      blogs
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} blog`;
+  async findOne(id: number) {
+    const blog = await this.prisma.blog.findUnique({
+      where: {
+        id,
+        isDeleted: false
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        imageUrl: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            userName: true,
+            profile: {
+              select: {
+                avatarUrl: true
+              }
+            }
+          }
+        },
+        category: {
+          select: {
+            category: true
+          }
+        }
+      }
+    })
+
+    if(!blog){
+      throw new NotFoundException('No such blog exist!');
+    }
+
+    return {
+      status: true,
+      blog
+    }
   }
 
   update(id: number, updateBlogDto: UpdateBlogDto) {
