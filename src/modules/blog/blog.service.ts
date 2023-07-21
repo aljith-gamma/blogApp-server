@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { BlogStatus } from '@prisma/client';
 
 @Injectable()
 export class BlogService {
@@ -42,12 +44,15 @@ export class BlogService {
     }
   }
 
-  async findAll(user) {
-    
+  async findAll(user, get: string, statusQuery: string) {
+    let status: BlogStatus = 'PUBLISHED';
+    if(statusQuery === 'published') status =  'PUBLISHED';
+    if(statusQuery === 'draft') status = 'DRAFT';
     const blogs = await this.prisma.blog.findMany({
       where: {
         isDeleted: false,
-        status: 'PUBLISHED'
+        status: status,
+        ...(get === 'mine' && { userId: user.id})
       },
       select: {
         id: true,
@@ -71,6 +76,9 @@ export class BlogService {
             category: true
           }
         }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     }) 
 
@@ -127,5 +135,30 @@ export class BlogService {
 
   remove(id: number) {
     return `This action removes a #${id} blog`;
+  }
+
+  async addCategory({ category }: CreateCategoryDto){
+
+    const isCategoryExist = await this.prisma.category.findUnique({
+      where: {
+        category
+      }
+    })
+
+    if(isCategoryExist){
+      throw new ConflictException('Category already exist!');
+    }
+
+    const reponse = await this.prisma.category.create({
+      data: {
+        category
+      }
+    })
+
+    return {
+      status: true,
+      message: 'Category successfully created',
+      category
+    }
   }
 }
