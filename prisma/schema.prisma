@@ -43,11 +43,13 @@ model Blog {
   views       Int        @default(0)
   tags        Json?
   category    Category?  @relation(fields: [categoryId], references: [id])
-  categoryId  Int?       @unique
+  categoryId  Int       
   user        User       @relation(fields: [userId], references: [id])
   userId      Int
   comments    Comment[]
   likes       Like[]
+
+  @@unique([id, userId])
 }
 
 model Profile {
@@ -86,7 +88,7 @@ model Follower {
 model Category {
   id       Int    @id @default(autoincrement())
   category String @unique()
-  blog     Blog?
+  blog     Blog[]
 }
 
 model Comment {

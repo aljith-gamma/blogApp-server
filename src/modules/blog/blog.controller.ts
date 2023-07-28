@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, UseGuards, Req, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, UseGuards, Req, ParseIntPipe, Query } from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
 import { UpdateBlogDto } from './dto/update-blog.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/guards/auth.guard';
+import { CreateCategoryDto } from './dto/create-category.dto';
 
 @Controller('blog')
 @UseGuards(AuthGuard)
@@ -13,7 +14,7 @@ export class BlogController {
   @Post('create')
   @UseInterceptors(FileInterceptor('file'))
   public async createBlog(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: Express.Multer.File,  
     @Body() createBlogDto: CreateBlogDto,  
     @Req() { user }
   ){
@@ -21,11 +22,14 @@ export class BlogController {
   }
 
   @Get('all')
-  findAll(
-    @Req() { user }
+  public async findAll(
+    @Req() { user },
+    @Query('get') get: string,
+    @Query('status') status: string
   ) {
-    return this.blogService.findAll(user);
+    return this.blogService.findAll(user, get, status);
   }
+
 
   @Get('categories')
   public async getAllCategories (){
@@ -33,7 +37,7 @@ export class BlogController {
   }
 
   @Get('getblog/:id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  public async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.blogService.findOne(id);
   }
 
@@ -42,8 +46,18 @@ export class BlogController {
     return this.blogService.update(+id, updateBlogDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.blogService.remove(+id);
+  @Delete('delete/:id')
+  public async deleteBlog(
+    @Param('id', ParseIntPipe) blogId: number,
+    @Req() { user }
+  ) {
+    return this.blogService.deleteBlog(blogId, user);
+  }
+
+  @Post('category')
+  public async addCategory(
+    @Body() createCategoryDto: CreateCategoryDto
+  ){
+    return this.blogService.addCategory(createCategoryDto);
   }
 }

@@ -17,9 +17,15 @@ CREATE TABLE `User` (
 CREATE TABLE `Blog` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `title` VARCHAR(191) NOT NULL,
-    `description` VARCHAR(191) NOT NULL,
+    `description` TEXT NOT NULL,
+    `imageUrl` VARCHAR(191) NULL,
     `isDeleted` BOOLEAN NOT NULL DEFAULT false,
     `status` ENUM('DRAFT', 'PUBLISHED', 'SCHEDULED', 'DELETED') NOT NULL DEFAULT 'PUBLISHED',
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `views` INTEGER NOT NULL DEFAULT 0,
+    `tags` JSON NULL,
+    `categoryId` INTEGER NOT NULL,
     `userId` INTEGER NOT NULL,
 
     PRIMARY KEY (`id`)
@@ -31,6 +37,7 @@ CREATE TABLE `Profile` (
     `firstName` VARCHAR(191) NULL,
     `lastName` VARCHAR(191) NULL,
     `bio` VARCHAR(191) NULL,
+    `avatarUrl` VARCHAR(191) NULL,
     `createdAt` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NULL,
     `userId` INTEGER NULL,
@@ -63,7 +70,6 @@ CREATE TABLE `Follower` (
 CREATE TABLE `Category` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `category` VARCHAR(191) NOT NULL,
-    `blogId` INTEGER NOT NULL,
 
     UNIQUE INDEX `Category_category_key`(`category`),
     PRIMARY KEY (`id`)
@@ -90,6 +96,9 @@ CREATE TABLE `Like` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
+ALTER TABLE `Blog` ADD CONSTRAINT `Blog_categoryId_fkey` FOREIGN KEY (`categoryId`) REFERENCES `Category`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Blog` ADD CONSTRAINT `Blog_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -100,9 +109,6 @@ ALTER TABLE `Role` ADD CONSTRAINT `Role_userId_fkey` FOREIGN KEY (`userId`) REFE
 
 -- AddForeignKey
 ALTER TABLE `Follower` ADD CONSTRAINT `Follower_userId_fkey` FOREIGN KEY (`userId`) REFERENCES `User`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `Category` ADD CONSTRAINT `Category_blogId_fkey` FOREIGN KEY (`blogId`) REFERENCES `Blog`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Comment` ADD CONSTRAINT `Comment_blogId_fkey` FOREIGN KEY (`blogId`) REFERENCES `Blog`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
