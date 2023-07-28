@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { BlogModule } from './modules/blog/blog.module';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
+import { ProfileModule } from './modules/profile/profile.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
       }
     }),
     BlogModule,
-    CloudinaryModule
+    CloudinaryModule,
+    ProfileModule
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

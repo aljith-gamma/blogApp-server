@@ -133,8 +133,37 @@ export class BlogService {
     return `This action updates a #${id} blog`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} blog`;
+  async deleteBlog(blogId: number, user) {
+
+    const isBlogExist = await this.prisma.blog.findUnique({
+      where: {
+        id_userId: {
+          id: blogId,
+          userId: user.id
+        },
+        isDeleted: false
+      }
+    })
+
+    if(!isBlogExist){
+      throw new NotFoundException('No such blog exist!');
+    }
+    
+    const deletedBlog = await this.prisma.blog.update({
+      where: { 
+        id: isBlogExist.id,
+        isDeleted: false
+      },
+      data: {
+        isDeleted: true,
+        status: BlogStatus.DELETED
+      }
+    })
+
+    return {
+      status: true,
+      message: 'Blog deleted successfully'
+    }
   }
 
   async addCategory({ category }: CreateCategoryDto){

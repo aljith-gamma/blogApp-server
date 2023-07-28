@@ -22,7 +22,7 @@ export class BlogController {
   }
 
   @Get('all')
-  findAll(
+  public async findAll(
     @Req() { user },
     @Query('get') get: string,
     @Query('status') status: string
@@ -37,7 +37,7 @@ export class BlogController {
   }
 
   @Get('getblog/:id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  public async findOne(@Param('id', ParseIntPipe) id: number) {
     return this.blogService.findOne(id);
   }
 
@@ -46,9 +46,12 @@ export class BlogController {
     return this.blogService.update(+id, updateBlogDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.blogService.remove(+id);
+  @Delete('delete/:id')
+  public async deleteBlog(
+    @Param('id', ParseIntPipe) blogId: number,
+    @Req() { user }
+  ) {
+    return this.blogService.deleteBlog(blogId, user);
   }
 
   @Post('category')
