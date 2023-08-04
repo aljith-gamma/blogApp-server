@@ -77,6 +77,7 @@ export class AuthService {
     return {
       status: true,
       token,
+      _id: user.id,
       message: 'Signed up successfully'
     };
   }
@@ -117,6 +118,7 @@ export class AuthService {
     return {
       status: true,
       token,
+      _id: user.id,
       message: 'Signed in successfully'
     };
   }

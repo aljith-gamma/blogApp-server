@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Query, Req, UploadedFile, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ProfileService } from "./profile.service";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { UpdateProfileDto } from "./dto/update-profile.dto";
@@ -9,11 +9,12 @@ import { AuthGuard } from "src/guards/auth.guard";
 export class ProfileController {
     constructor(private readonly profileService: ProfileService){};
 
-    @Get('get')
+    @Get(':id')
     public async getProfile(
-        @Req() { user }
+        @Req() { user },
+        @Param('id', ParseIntPipe) id: number
     ){
-        return this.profileService.getProfile(user);
+        return this.profileService.getProfile(user, id);
     }
 
     @Post('update')

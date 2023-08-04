@@ -1,0 +1,5 @@
+-- DropIndex
+DROP INDEX `Blog_content_title_description_idx` ON `Blog`;
+
+-- CreateIndex
+CREATE FULLTEXT INDEX `Blog_content_idx` ON `Blog`(`content`);

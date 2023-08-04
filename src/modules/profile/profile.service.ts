@@ -11,17 +11,36 @@ export class ProfileService {
         private cloudinaryService: CloudinaryService
     ) {};
 
-    async getProfile(user) {
+    async getProfile(user, userId: number) {
+        let id = user.id;
+        if(userId) id = userId;
+
         const profile = await this.prisma.profile.findUnique({
-            where: { userId: user.id}
-        }) 
+            where: { userId: id },
+            include: {
+                user: true
+            }
+        })
+        let userData = user;
+
+        if(userId) {
+            userData = await this.prisma.user.findUnique({
+                where: {
+                    id: userId 
+                }
+            })
+        }
+
+        if(!userData){
+            throw new NotFoundException('No such user exist!');
+        }
         
         return {
-            userId: user.id,
+            userId,
             ...profile,
             user: user.id,
-            userName: user.userName,
-            followers: 837
+            userName: userData.userName,
+            followersCount: userData.followersCount
         };
     }
 

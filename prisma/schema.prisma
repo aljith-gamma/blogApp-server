@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
 datasource db {
@@ -11,17 +12,18 @@ datasource db {
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
-  userName  String     @unique
-  email     String     @unique
-  password  String
-  isDeleted Boolean    @default(false)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  blog      Blog[]
-  profile   Profile?
-  role      Role?
-  followers Follower[]
+  id             Int        @id @default(autoincrement())
+  userName       String     @unique
+  email          String     @unique
+  password       String
+  isDeleted      Boolean    @default(false)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  blog           Blog[]
+  profile        Profile?
+  role           Role?
+  followers      Follower[]
+  followersCount Int        @default(0)
 }
 
 enum BlogStatus {
@@ -35,7 +37,9 @@ model Blog {
   id          Int        @id @default(autoincrement())
   title       String
   description String     @db.Text
-  imageUrl    String?
+  content     String     @db.Text
+  imageUrl    String
+  readTime    String
   isDeleted   Boolean    @default(false)
   status      BlogStatus @default(PUBLISHED)
   createdAt   DateTime   @default(now())
@@ -43,13 +47,14 @@ model Blog {
   views       Int        @default(0)
   tags        Json?
   category    Category?  @relation(fields: [categoryId], references: [id])
-  categoryId  Int       
+  categoryId  Int
   user        User       @relation(fields: [userId], references: [id])
   userId      Int
   comments    Comment[]
   likes       Like[]
 
   @@unique([id, userId])
+  @@fulltext([content])
 }
 
 model Profile {

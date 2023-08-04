@@ -1,8 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, UseGuards, Req, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UploadedFile, UseInterceptors, UseGuards, Req, ParseIntPipe, Query, UploadedFiles } from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { CreateBlogDto } from './dto/create-blog.dto';
-import { UpdateBlogDto } from './dto/update-blog.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { CreateCategoryDto } from './dto/create-category.dto';
 
@@ -11,25 +10,41 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 export class BlogController {
   constructor(private readonly blogService: BlogService) {}
 
+  @Post('upload')
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'files', maxCount: 10}
+  ]))
+  public async uploadImages(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Req() { user }
+  ){
+    return this.blogService.uploadImages(files, user);
+  }
+
   @Post('create')
-  @UseInterceptors(FileInterceptor('file'))
-  public async createBlog(
-    @UploadedFile() file: Express.Multer.File,  
+  public async createBlog( 
     @Body() createBlogDto: CreateBlogDto,  
     @Req() { user }
   ){
-    return this.blogService.createBlog(createBlogDto, file, user);
+    return this.blogService.createBlog(createBlogDto, user);
   }
 
   @Get('all')
-  public async findAll(
-    @Req() { user },
-    @Query('get') get: string,
-    @Query('status') status: string
-  ) {
-    return this.blogService.findAll(user, get, status);
+  public async getAllBlogs(
+    @Query('skip') skip: string,
+    @Query('q') query: string
+  ){
+    return this.blogService.getAllBlogs(skip, query);
   }
 
+  @Get('get')
+  public async findBlogs(
+    @Query('userId', ParseIntPipe) userId: number,
+    @Query('status') status: string,
+    @Query('skip') skip: string
+  ) {
+    return this.blogService.findBlogs(userId, status, skip);
+  }
 
   @Get('categories')
   public async getAllCategories (){
@@ -37,13 +52,21 @@ export class BlogController {
   }
 
   @Get('getblog/:id')
-  public async findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.blogService.findOne(id);
+  public async findOne(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('check') check: string,
+    @Req() { user }
+  ) {
+    return this.blogService.findOne(id, user, check);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBlogDto: UpdateBlogDto) {
-    return this.blogService.update(+id, updateBlogDto);
+  public async updateBlog(
+    @Param('id', ParseIntPipe) blogId: number, 
+    @Body() updateBlogDto: CreateBlogDto,
+    @Req() { user }
+  ) {
+    return this.blogService.updateBlog(blogId, updateBlogDto, user);
   }
 
   @Delete('delete/:id')

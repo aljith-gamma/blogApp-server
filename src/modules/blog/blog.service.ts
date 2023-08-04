@@ -14,20 +14,19 @@ export class BlogService {
     private cloudinaryService: CloudinaryService
   ){};
 
-  async createBlog(createBlogDto: CreateBlogDto, file, user) {
-    const { title, description, tags, categoryId} = createBlogDto;
-
-    const res = await this.cloudinaryService.uploadImage(file);
-    const { secure_url } = res;
+  async createBlog(createBlogDto: CreateBlogDto, user) {
+    const {content, tags, categoryId, title, description, imageUrl, readTime} = createBlogDto;
 
     const result = await this.prisma.blog.create({
       data: {
         title,
         description,
+        content,
+        readTime,
         tags: JSON.parse(tags),
-        imageUrl: secure_url,
         userId: user.id,
-        categoryId: +categoryId
+        categoryId: +categoryId,
+        imageUrl
       }
     })
     return {
@@ -36,28 +35,107 @@ export class BlogService {
     }
   }
 
+  async uploadImages(files: any, user){
+    const promises = files?.files.map((file) => {
+      return this.cloudinaryService.uploadImage(file);
+    })
+    
+    const result = await Promise.all(promises);
+
+    const urlData = files.files.map((item) => {
+      return {
+        id: item.originalname
+      }
+    })
+    
+    result.forEach((imgData, i) => {
+      urlData[i]['imgUrl'] = imgData.secure_url;
+    })
+    
+    return {
+      status: true,
+      data: urlData
+    }
+  }
+
   async getAllCategories(){
     const categories = await this.prisma.category.findMany();
-
+    
     return {
       categories
     }
   }
 
-  async findAll(user, get: string, statusQuery: string) {
+  async findBlogs(userId: number, statusQuery: string, skip: string) {
+    
     let status: BlogStatus = 'PUBLISHED';
     if(statusQuery === 'published') status =  'PUBLISHED';
     if(statusQuery === 'draft') status = 'DRAFT';
     const blogs = await this.prisma.blog.findMany({
       where: {
         isDeleted: false,
-        status: status,
-        ...(get === 'mine' && { userId: user.id})
+        status,
+        userId: userId
       },
       select: {
         id: true,
         title: true,
         description: true,
+        imageUrl: true,
+        readTime: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            userName: true,
+            profile: {
+              select: {
+                avatarUrl: true
+              }
+            }
+          }
+        },
+        category: {
+          select: {
+            category: true,
+            id: true
+          }
+        },
+        tags: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      ...(skip && { skip: +skip }), 
+      take: 10
+    }) 
+
+    return {
+      status: true,
+      blogs: {
+        blogs,
+        skip: +skip
+      }
+    }
+  }
+
+  async getAllBlogs(skip: string, query: string){
+    
+    const blogs = await this.prisma.blog.findMany({
+      where: {
+        isDeleted: false,
+        status: 'PUBLISHED',
+        ...(query && {
+          content: {
+            search: query
+          }
+        })
+      },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        readTime: true,
         imageUrl: true,
         createdAt: true,
         user: {
@@ -79,26 +157,37 @@ export class BlogService {
       },
       orderBy: {
         createdAt: 'desc'
-      }
-    }) 
+      },
+      skip: +skip, 
+      take: 10
+    });
 
     return {
-      status: true,
-      blogs
+      status: true, 
+      blogs: {
+        blogs,
+        skip: +skip
+      }
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, user, check?: string) {
     const blog = await this.prisma.blog.findUnique({
       where: {
         id,
-        isDeleted: false
+        isDeleted: false,
+        ...(check && {
+          id_userId: {
+            id,
+            userId: user.id
+          }
+        }) 
       },
       select: {
         id: true,
         title: true,
-        description: true,
-        imageUrl: true,
+        content: true,
+        readTime: true,
         createdAt: true,
         user: {
           select: {
@@ -115,7 +204,12 @@ export class BlogService {
           select: {
             category: true
           }
-        }
+        },
+        ...(check && {
+          description: true,
+          categoryId: true,
+          tags: true
+        })
       }
     })
 
@@ -129,8 +223,45 @@ export class BlogService {
     }
   }
 
-  update(id: number, updateBlogDto: UpdateBlogDto) {
-    return `This action updates a #${id} blog`;
+  async updateBlog(blogId: number, updateBlogDto: UpdateBlogDto, user) {
+
+    const isBlogExist = await this.prisma.blog.findUnique({
+      where: {
+        id_userId: {
+          id: blogId,
+          userId: user.id
+        }
+      }
+    })
+
+    if(!isBlogExist){
+      throw new NotFoundException('No such blog exist!');
+    }
+
+    const {content, tags, categoryId, title, description, imageUrl, readTime} = updateBlogDto;
+
+    const updatedData = await this.prisma.blog.update({
+      where: {
+        id_userId: {
+          id: blogId,
+          userId: user.id
+        }
+      },
+      data: {
+        title,
+        description,
+        imageUrl,
+        content,
+        readTime,
+        categoryId: +categoryId,
+        tags: JSON.parse(tags)
+      }
+    })
+
+    return {
+      status: true,
+      message: 'Blog updated successfully'
+    }
   }
 
   async deleteBlog(blogId: number, user) {
