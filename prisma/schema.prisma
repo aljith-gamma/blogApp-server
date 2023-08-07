@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["fullTextSearch", "fullTextIndex"]
 }
 
@@ -12,18 +12,21 @@ datasource db {
 }
 
 model User {
-  id             Int        @id @default(autoincrement())
-  userName       String     @unique
-  email          String     @unique
-  password       String
-  isDeleted      Boolean    @default(false)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
-  blog           Blog[]
-  profile        Profile?
-  role           Role?
-  followers      Follower[]
-  followersCount Int        @default(0)
+  id                 Int        @id @default(autoincrement())
+  userName           String     @unique
+  email              String     @unique
+  password           String
+  isDeleted          Boolean    @default(false)
+  isVerified         Boolean    @default(false)
+  otp                String?
+  verificationExpiry DateTime?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  blog               Blog[]
+  profile            Profile?
+  role               Role?
+  followers          Follower[]
+  followersCount     Int        @default(0)
 }
 
 enum BlogStatus {
